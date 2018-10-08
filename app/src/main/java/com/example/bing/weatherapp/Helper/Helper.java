@@ -18,6 +18,7 @@ public class Helper {
         try {
             URL url = new URL(urlString);
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+            int code = httpURLConnection.getResponseCode();
             if(httpURLConnection.getResponseCode() == 200){
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream()));
                 StringBuilder stringBuilder = new StringBuilder();

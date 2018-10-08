@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        provider = locationManager.getBestProvider(new Criteria(), false);
+        provider = locationManager.getBestProvider(new Criteria() , false);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{
@@ -109,13 +109,17 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
         if(location == null)
             Log.e("TAG","No location");
+        lat = location.getLatitude();
+        lon = location.getLongitude();
+        new GetWeather().execute(Common.apiRequest(String.valueOf(lat),String.valueOf(lon)));
     }
 
     @Override
     public void onLocationChanged(Location location) {
         lat = location.getLatitude();
         lon = location.getLongitude();
-
+        Log.e("location",String.format("%s,%s",lat,lon));
+        new GetWeather().execute(Common.apiRequest(String.valueOf(lat),String.valueOf(lon)));
     }
 
     @Override
@@ -125,7 +129,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     @Override
     public void onProviderEnabled(String provider) {
-
     }
 
     @Override
@@ -134,7 +137,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     }
 
     private class GetWeather extends AsyncTask<String,Void,String> {
-
         ProgressDialog pd = new ProgressDialog(MainActivity.this);
 
 
@@ -147,20 +149,16 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
         @Override
         protected String doInBackground(String... strings) {
-            String stream = null;
-            String urlStrig = strings[0];
+            String stream;
+            String urlString = strings[0];
 
             Helper helper = new Helper();
-            stream = helper.getHttpData(urlStrig);
+            stream = helper.getHttpData(urlString);
             return stream;
         }
 
         @Override
         protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-            if(s.contains("Error: Not Found City")){
-                pd.dismiss();
-            }
             Gson gson = new Gson();
             Type mType = new TypeToken<OpenWeatherMap>(){}.getType();
             openWeatherMap = gson.fromJson(s,mType);
@@ -168,11 +166,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
             txtCity.setText(String.format("%s,%s",openWeatherMap.getName(),openWeatherMap.getSys().getCountry()));
             txtLastUpdate.setText(String.format("最后更新时间: %s", Common.getDateNow()));
-            txtDescription.setText(openWeatherMap.getWeatherList().get(0).getDescription());
+            txtDescription.setText(openWeatherMap.getWeather().get(0).getDescription());
             txtHumidity.setText(String.format("%s%%",openWeatherMap.getMain().getHumidity()));
-            txtTime.setText(String.format("%s/%s", Common.unixTimeStampToDateTime(openWeatherMap.getSys().getSunrise()), Common.unixTimeStampToDateTime(openWeatherMap.getSys().getSunset())));
+            txtTime.setText(String.format("%s/%s", Common.unixTimeStampToDateTime(openWeatherMap.getSys().getSunset()), Common.unixTimeStampToDateTime(openWeatherMap.getSys().getSunrise())));
             txtTemp.setText(String.format("%.2f °C",openWeatherMap.getMain().getTemp()));
-            Picasso.get().load(Common.getImage(openWeatherMap.getWeatherList().get(0).getIcon())).into(imageView);
+            Picasso.get().load(Common.getImage(openWeatherMap.getWeather().get(0).getIcon())).into(imageView);
         }
     }
 }
